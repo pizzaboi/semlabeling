@@ -6,11 +6,12 @@ Covert annotated CSV file to BCCWJ-styled corpus.
 
 Supported CSV format:
     FileName,Morphme,ChunkTag,SemanticTag
-*FileName must be started with 'OC'.
-*ChunkTag must be B, I, C, or blank.
-*SemanticTag needed if ChunkTag is B.
-*Each file should be separated by blank line.
-*CSV file must be written in UTF-8.
+
+* FileName must be started with 'OC'.
+* ChunkTag must be B, I, C, or blank.
+* SemanticTag needed if ChunkTag is B.
+* Each file should be separated by blank line.
+* CSV file must be written in UTF-8.
 
 Supported CSV sample:
 OC09_01707m_002.txt,聞こえ,C,
