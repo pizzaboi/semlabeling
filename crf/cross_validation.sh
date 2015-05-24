@@ -49,7 +49,7 @@ done
 echo done
 
 ## Make data for evaluation, writing result as crf.eval.
-python eval_data.py $corpus $tagged/ > $dir/crf.eval
+python data4eval.py $corpus $tagged/ > $dir/crf.eval
 
 ## Evaluate Eval.py.
 python ../lib/Eval.py < $dir/crf.eval
