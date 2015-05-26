@@ -1,7 +1,7 @@
 #! bin/sh
 
 ## Parse arguments. This script does not parse currently.
-dir=ver2.1_allsent
+dir=ver2.1_20150526
 corpus=../data/JFEcorpus_ver2.1/
 fold=10
 
@@ -26,7 +26,7 @@ python split.py ${corpus} ${dir}/
 echo -n Extracting features...
 for index in `seq 0 9`
     do
-        python feature.py ${corpus} -o < ${dataset}/${index} > ${features}/${index}.f
+        python feature.py ${corpus} < ${dataset}/${index} > ${features}/${index}.f
         echo -n "${index} "
     done
 echo done
@@ -42,14 +42,14 @@ do
             trains+=(${features}/${train}.f)
         fi
     done
-    cat "${trains[@]}" | crfsuite learn -m ${model}/${test}.m - > logs
-    crfsuite tag -r -m ${model}/${test}.m < ${features}/${test}.f > ${tagged}/${test}.t
+    cat "${trains[@]}" | /usr/local/bin/crfsuite learn -m ${model}/${test}.m - > logs
+    /usr/local/bin/crfsuite tag -r -m ${model}/${test}.m < ${features}/${test}.f > ${tagged}/${test}.t
     echo -n "${test} "
 done
 echo done
 
 ## Make data for evaluation, writing result as crf.eval.
-python data4eval.py $corpus $tagged/ > $dir/crf.eval
+#python data4eval.py $corpus $tagged/ > $dir/crf.eval
 
 ## Evaluate Eval.py.
-python ../lib/Eval.py < $dir/crf.eval
+#python ../lib/Eval.py < $dir/crf.eval
