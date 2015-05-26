@@ -26,8 +26,8 @@ def readiter(src_list, names=('y','w','info','ne'), sep='\t'):
             else:
                 #fields = ['UNKNOWN'] + line.split(sep)
                 fields = line.split(sep)
-                #if len(fields) != len(names):
-                if len(fields) != len(names) - 1:
+                if len(fields) != len(names):
+                #if len(fields) != len(names) - 1:
                     raise ValueError("Invalid line: %s\n" % line)
                 #seq.append(dict(zip(names, tuple(fields[:4]))))
                 seq.append(dict(zip(names, tuple(fields[:3]))))
@@ -166,6 +166,6 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     #print '\033[38;5;46m' + str(args) + '\033[0m'
-    #srcs = [f.strip('\n') for f in sys.stdin]
-    srcs = [f for f in os.listdir(args.corpusdir) if f != '.DS_Store']
+    srcs = [f.strip('\n') for f in sys.stdin]
+    #srcs = [f for f in os.listdir(args.corpusdir) if f != '.DS_Store']
     extract_feature(srcs, args.o)
