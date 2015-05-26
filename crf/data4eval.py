@@ -6,41 +6,46 @@
 import argparse
 import os
 
-## Merge result from CRFSuite with annotated gold standard.
-def make_data4evaluation():
-
-    ## Store all gold-labels into list.
-    L = []
-    for src in [f for f in os.listdir(args.corpus) if f != '.DS_Store']:
-        for line in open(args.corpus + src):
+## Yields gold standards from annotated_corpus_dir.
+def gs_iter(annotated_corpus_dir):
+    for src in [f for f in os.listdir(annotated_corpus_dir) if f != '.DS_Store']:
+        for line in open(annotated_corpus_dir + src):
             if not line.startswith(('#','*','EOS')):
-                L.append(line.strip('\n'))
+                yield (src, line.strip('\n'))
 
-    ## Merge with result from CRFSuite.
+## Merge result from CRFSuite with annotated gold standard regardless of semantic tags.
+def make_data4evaluation(annotated_corpus_dir, tagged_dir):
+
+    gs = gs_iter(annotated_corpus_dir)
+
     for i in xrange(10):
-        for line in open(args.tagged + '{}.t'.format(i)):
+        for line in open(tagged_dir + '{}.t'.format(i)):
             line = line.strip('\n')
             if line:
-                gold = L.pop(0)
-
-                ## For normal cross-validation (just merge two labels.)
-                #fo.write('{}\t{}\n'.format(
-                #    gold.split('\t')[0], line.split('\t')[1]))
-
-                ## For FE-only cross-validation (merge only when gold is FE.)
-                while not gold.startswith(('B','I')):
-                    gold = L.pop(0)
-                print '{}\t{}'.format(
-                        gold.split('\t')[0], line.split('\t')[1])
-
-                # BIを教えて検定するけどエラー分析ようのファイルをみるとき
-                #while not gold.startswith(('B','I')):
-                #    gold = L.pop(0)
-                #print '\t'.join((gold.split('\t')[1], gold.split('\t')[0], line.split('\t')[1]))
-
-                #print gold.split('\t')[0] + '\t' + line.split('\t')[1]
+                g = gs.next()
+                print '{}\t{}'.format(g[1].split('\t')[0], line.split('\t')[1])
             else:
                 print
+
+## Merge result from CRFSuite with annotated gold standard only if FE.
+def make_data4evaluation_only_fe(annotated_corpus_dir, tagged_dir):
+
+    ## get generator for gold standards.
+    gs = gs_iter(annotated_corpus_dir)
+    
+    ## merge gold standards with output from CRFSuite.
+    for i in xrange(10):
+        for line in open(tagged_dir + '{}.t'.format(i)):
+            line = line.strip('\n')
+            if line:
+
+                ## get gold standards only from functional expressions.
+                g = gs.next()
+                while not g[1].startswith(('B','I')):
+                    g = gs.next()
+                print '{}\t{}'.format(g[1].split('\t')[0], line.split('\t')[1])
+            else:
+                print # separator
 
 ## Parse arguments.
 def parse_args():
@@ -52,4 +57,4 @@ def parse_args():
 
 if __name__ == '__main__':
     args = parse_args()
-    make_data4evaluation()
+    make_data4evaluation_only_fe(args.corpus, args.tagged)
