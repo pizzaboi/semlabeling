@@ -19,6 +19,7 @@
 ## sem_tag: annotated semantic tag
 ##   (ex. B-疑問)
 
+import argparse
 import os, sys
 
 ## Returns file ID in String.
@@ -36,8 +37,7 @@ def diff_format(line):
 		(str(morph_boundary(morph)), features, ne_tag, sem_tag))
 
 ## Main process.
-def main():
-	corpus_dir = 'data/JFEcorpus_ver2.1/'
+def main(corpus_dir):
 	srcs = [f for f in os.listdir(corpus_dir) if f != '.DS_Store']
 	for src in srcs:
 
@@ -54,5 +54,13 @@ def main():
 			elif not line.startswith(('#', '*')):
 				print diff_format(line)
 
+## Parse arguments.
+def parse_args():
+	parser = argparse.ArgumentParser()
+	parser.add_argument('corpus', type=str)
+	args = parser.parse_args()
+	return args
+
 if __name__ == '__main__':
-	main()
+	args = parse_args()
+	main(args.corpus)
