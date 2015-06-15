@@ -10,10 +10,10 @@ class Morph:
         self.__filename = row[0].replace('.txt', '.depmod')
         self.__surface = row[1]
         self.__chunk = row[2]
-        self.__sem = sem_filter(row[3])
+        self.__sem = self.sem_filter(row[3])
 
     ## convert ver.2.0 to ver.2.1
-    def sem_filter(sem):
+    def sem_filter(sem, label):
         if label == '確認': return '疑問'
         elif label == '過去': return '完了'
         elif label == '命令': return '依頼'
@@ -85,10 +85,12 @@ if __name__ == '__main__':
                 fo = open(normalize_dst(args.dst) + morphs[0].filename(), 'w')
                 for line in fi:
                     if line.startswith(('#','*','EOS')):
-                        fo.write(line)
+                        #fo.write(line)
+                        print line.strip('\n')
                     else:
                         m = morphs.pop(0)
-                        fo.write(m.label(args.sep) + '\t' + line)
+                        #fo.write(m.label(args.sep) + '\t' + line)
+                        print m.label(args.sep) + '\t' + line.strip('\n')
 
                 morphs = []
 
