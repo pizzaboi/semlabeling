@@ -1,9 +1,9 @@
-# Semantic Tagger for Japanese Functional Expressions (FEs)
+## Semantic Tagger for Japanese Functional Expressions (FEs)
 
-- Assign semantic labels to each FEs in the input sentence.
-- USAGE: `echo "*sentence*" | bash run_tagger.sh`
+### Assign semantic labels to each FEs in the input sentence.
+### USAGE: `echo "*sentence*" | bash run_tagger.sh`
 
-## components
+## Components
 - **run_tagger.sh** - Main file.
 - **unit_sent_feature.py** - Script for extracting features.
 - **output.py** - Script for displaying the result.
