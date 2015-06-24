@@ -1,7 +1,7 @@
 ## Semantic Tagger for Japanese Functional Expressions (FEs)
 Assign semantic labels to each FEs in the input sentence.
 
-## Usage
+## Example
 ```
 $ echo "パソコンが壊れて遅れたわけではない" | bash run_tagger.sh
 * 0 1D 0/1 0.464612
