@@ -117,13 +117,14 @@ def parse_args():
 	parser_b.add_argument("-s", "--size", type=int, default=10000)
 
 	return parser.parse_args()
-
+	
 if __name__ == "__main__":
 	args = parse_args()
+	#print args
 
 	s = Sampler()
 
-	if args.parsed_oc:
+	if hasattr(args, "parsed_oc"):
 		ret = s.morph_sampling(args.parsed_oc, args.lower, args.upper, args.size)
 
 	else:
@@ -135,6 +136,6 @@ if __name__ == "__main__":
 
 		ret = s.conditional_sampling(s_list, e_list, args.percentage, by_num=args.n)
 
-	#for x in ret:
-	#	print x
-	print len(ret)
+	for x in ret:
+		print x
+	#print len(ret)
