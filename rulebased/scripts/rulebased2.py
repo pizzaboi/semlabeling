@@ -272,7 +272,7 @@ def main():
     for src in [f for f in os.listdir(corpus) if f != '.DS_Store']:
         S = encode_sentence(corpus  + src)
         rt = RulebasedTagger(S)
-        res = rt.tagger(True)
+        res = rt.tagger()
         for morph in res:
             print repr(morph)
         print
@@ -284,6 +284,10 @@ if __name__ == '__main__':
     #FE = Kyotocabinet.read_db('../ttj_dict.kch')
     CR = Kyotocabinet.read_db('rulebased/cr_dict.kch')
     #CR = Kyotocabinet.read_db('../cr_dict_for_multi.kch')
-    FQ = Mostfreq.ranked_dic()
+
+    import freq
+    counter = freq.CorpusCounter()
+    FQ = counter.frequent_tags("data/JFEcorpus_ver2.1/")
+
     #test()
     main()
