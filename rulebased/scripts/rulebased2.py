@@ -78,6 +78,10 @@ class Morph:
 class RulebasedTagger:
     def __init__(self, S):
         self.sentence = S
+        self.check_has_key  = 0
+        self.check_surround = 0
+        self.check_filter   = 0
+        self.check_connect  = 0
 
     ## surround_match() is True <=> all tokes in seq matches in surface.
     ## param i   : current index in sentence 
@@ -91,6 +95,7 @@ class RulebasedTagger:
                 return False
             elif self.sentence[i + offset].surface() != token.split(':')[1]:
                 return False
+        self.check_surround += 1
         return True
 
     ## comp_rule(r1, r2) is True <=> r1 > r2.
@@ -156,6 +161,8 @@ class RulebasedTagger:
             if not entries:
                 continue
 
+            self.check_has_key += 1
+
             for entry in entries.split('/'):
                 seq = entry.split(',')
                 sec = seq.pop(0)
@@ -171,11 +178,13 @@ class RulebasedTagger:
                 sec = self.sem_filter_02(sec)
                 if not sec:
                     continue
+                self.check_filter += 1
 
                 # Check connection
                 if not self.connect_match(i, ttj):
                     #print 'Connection Mismatched: %s' % entry
                     continue
+                self.check_connect += 1
 
                 # Add candidate, if surround AND connectoin matched
                 
@@ -269,13 +278,19 @@ def main():
     import os
     corpus = 'data/JFEcorpus_ver2.1/'
     #corpus = '700/tmp/'
+    c0, c1, c2, c3 = 0, 0, 0, 0
     for src in [f for f in os.listdir(corpus) if f != '.DS_Store']:
         S = encode_sentence(corpus  + src)
         rt = RulebasedTagger(S)
         res = rt.tagger()
-        for morph in res:
-            print repr(morph)
-        print
+        c0 += rt.check_has_key
+        c1 += rt.check_surround
+        c2 += rt.check_filter
+        c3 += rt.check_connect
+        #for morph in res:
+        #    print repr(morph)
+        #print
+    print c0, c1, c2, c3
 
 if __name__ == '__main__':
     import Kyotocabinet
