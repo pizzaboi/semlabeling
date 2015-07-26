@@ -278,7 +278,6 @@ def main():
         print
 
 if __name__ == '__main__':
-    import Mostfreq
     import Kyotocabinet
     FE = Kyotocabinet.read_db('rulebased/fe_dict.kch')
     #FE = Kyotocabinet.read_db('../ttj_dict.kch')
