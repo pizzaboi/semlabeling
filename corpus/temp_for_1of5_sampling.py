@@ -1,23 +1,15 @@
 # -*- coding: utf-8 -*-
 
-## make diff file between bccwj and annotated corpus.
-##
-## diff file format:
-##     # S-ID [filename]
-##     [morph_length]\t[morph_info]\t[ne_tag]\t[sem_tag]
-##     [morph_length]\t[morph_info]\t[ne_tag]\t[sem_tag]
-##     ...
-##     [morph_length]\t[morph_info]\t[ne_tag]\t[sem_tag]
-##     EOS
-##
-## morph_length:
-##   (ex. 2 for 京都)
-## morph_info: morph-parsed result with IPA dic.
-##   (ex. 名詞,固有名詞,地域,一般,*,*,京都,キョウト,キョート)
-## ne_tag: morph-parsed result.
-##   (ex. B-LOCATION)
-## sem_tag: annotated semantic tag
-##   (ex. B-疑問)
+import random
+
+## リストUからN件をサンプリングしたリストを返す
+def sampling(U, N):
+    for i in xrange(N):
+        index = random.randint(N, len(U)-1)
+        U[i], U[index] = U[index], U[i]
+    return sorted(U[:N])
+
+
 
 import argparse
 import os, sys
@@ -37,8 +29,10 @@ def diff_format(line):
 		(str(morph_boundary(morph)), features, ne_tag, sem_tag))
 
 ## Main process.
-def main(corpus_dir, srcs):
+def main(corpus_dir):
+	srcs = sampling([f for f in os.listdir(corpus_dir) if f != '.DS_Store'], 147)
 	for src in srcs:
+
 		f = open(corpus_dir + src)
 
 		## print meta_description per file.
@@ -60,11 +54,5 @@ def parse_args():
 	return args
 
 if __name__ == '__main__':
-	corpus = "data/JFEcorpus_ver2.1_master/"
-	samples = sys.argv[1:]
-	srcs = []
-	for sample in samples:
-		for line in open(sample):
-			srcs.append(line.strip("\n") + ".depmod")
-	main(corpus, sorted(srcs))
-
+	args = parse_args()
+	main(args.corpus)
