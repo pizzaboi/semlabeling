@@ -10,78 +10,16 @@ __LABEL_ver2_1__ = ('判断','否定','疑問','推量-不確実','推量-高確
 '場合','順接仮定','順接確定','逆接仮定','逆接確定','理由','目的','並立',
 '例示','様態','比況','程度','強調','感嘆','態度','内容','名詞化','話題')
 
-class Morph:
-    def __init__(self, line):
-        self.__tag     = None
-        self.__surface = None
-        self.__feature = None
-        self.set_line(line)
+import json, codecs
+import os
 
-        self.__ttjsurface  = []
-        self.__defined_tag = None
-        self.__candidates  = []
-
-    def set_line(self, line):
-        line = line.split("\t")
-        self.__tag     = line[0]
-        self.__surface = line[1]
-        self.__feature = line[2]
-
-    def tag(self):
-        return self.__tag
-
-    def surface(self):
-        return self.__surface
-
-    def feature(self):
-        return self.__feature
-
-    def candidates(self):
-        return self.__candidates
-
-    def ttjsurface(self):
-        return self.__ttjsurface
-
-    def defined_tag(self):
-        return self.__defined_tag
-
-    def is_fe(self):
-        return bool(self.__tag.startswith(("B", "I")))
-
-    def add_candidate(self, cand):
-        self.__candidates.append(cand)
-
-    def is_tagged(self):
-        return bool(self.__defined_tag)
-
-    def set_ttjsurface(self, ttjsurface):
-        self.__ttjsurface = ttjsurface
-
-    def define_as_begin(self, sem):
-        self.__defined_tag = "B-{}".format(sem)
-
-    def define_as_inner(self, sem):
-        self.__defined_tag = "I-{}".format(sem)
-
-    def define_as_multi(self, sem):
-        self.__defined_tag += "," + sem
-
-    def __str__(self):
-        return '%s\t%s\t' % (self.tag, self.surface)
-
-    def __repr__(self):
-        res = self.__defined_tag if self.__defined_tag else "O"
-        #return self.__surface +"\t" + self.__tag + "\t" + res + "\t" + "/".join([x[0] for x in self.__candidates])
-        return self.__tag + "\t" + res
+import freq
+from morph import Morph
 
 ## Class for rulebased tagger.
 class RulebasedTagger:
     def __init__(self, S):
         self.sentence = S
-        self.check_has_key  = 0
-        self.check_surround = 0
-        self.check_filter   = 0
-        self.check_connect  = 0
 
     ## surround_match() is True <=> all tokes in seq matches in surface.
     ## param i   : current index in sentence 
@@ -95,7 +33,6 @@ class RulebasedTagger:
                 return False
             elif self.sentence[i + offset].surface() != token.split(':')[1]:
                 return False
-        self.check_surround += 1
         return True
 
     ## comp_rule(r1, r2) is True <=> r1 > r2.
@@ -115,13 +52,11 @@ class RulebasedTagger:
     def connect_match(self, i, ttj):
         ttj_id, ttj_surface = ttj.split(':')
         ttj_id = ttj_id.replace('.', '')
-        connect_rules = CR.get(ttj_id)
-        if not connect_rules:
+        if not CR.has_key(ttj_id):
             return True
-        for rule in connect_rules.split(';'):
+        for rule in CR[ttj_id]:
             if self.comp_rule(rule, self.sentence[i-1].feature()):
                 return True
-        #print connect_rules
         return False
 
     ## Extract semantics label.
@@ -161,8 +96,6 @@ class RulebasedTagger:
             if not entries:
                 continue
 
-            self.check_has_key += 1
-
             for entry in entries.split('/'):
                 seq = entry.split(',')
                 sec = seq.pop(0)
@@ -178,13 +111,11 @@ class RulebasedTagger:
                 sec = self.sem_filter_02(sec)
                 if not sec:
                     continue
-                self.check_filter += 1
 
                 # Check connection
                 if not self.connect_match(i, ttj):
                     #print 'Connection Mismatched: %s' % entry
                     continue
-                self.check_connect += 1
 
                 # Add candidate, if surround AND connectoin matched
                 
@@ -265,7 +196,6 @@ def encode_sentence(src):
     return S
 
 def test():
-    import os
     #srcs = [f for f in os.listdir(args.corpus) if f != '.DS_Store']
     src='data/JFEcorpus_ver2.1/OC15_00907m_004.depmod'
     S = encode_sentence(src)
@@ -275,31 +205,25 @@ def test():
     #rt.print_label()
 
 def main():
-    import os
     corpus = 'data/JFEcorpus_ver2.1/'
     #corpus = '700/tmp/'
-    c0, c1, c2, c3 = 0, 0, 0, 0
     for src in [f for f in os.listdir(corpus) if f != '.DS_Store']:
         S = encode_sentence(corpus  + src)
         rt = RulebasedTagger(S)
         res = rt.tagger()
-        c0 += rt.check_has_key
-        c1 += rt.check_surround
-        c2 += rt.check_filter
-        c3 += rt.check_connect
-        #for morph in res:
-        #    print repr(morph)
-        #print
-    print c0, c1, c2, c3
+        for morph in res:
+            print repr(morph)
+        print
 
 if __name__ == '__main__':
     import Kyotocabinet
     FE = Kyotocabinet.read_db('rulebased/fe_dict.kch')
     #FE = Kyotocabinet.read_db('../ttj_dict.kch')
-    CR = Kyotocabinet.read_db('rulebased/cr_dict.kch')
+
+    with codecs.open("rulebased/connect.json", "r", "utf-8") as f:
+        CR = json.load(f)
     #CR = Kyotocabinet.read_db('../cr_dict_for_multi.kch')
 
-    import freq
     counter = freq.CorpusCounter()
     FQ = counter.frequent_tags("data/JFEcorpus_ver2.1/")
 
