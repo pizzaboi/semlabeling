@@ -11,8 +11,4 @@
 - TBA
 
 ## CRFによる解析
-<<<<<<< HEAD
 - TBA
-=======
-- TBA
->>>>>>> origin/master
