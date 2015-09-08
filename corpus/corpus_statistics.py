@@ -140,5 +140,5 @@ def main():
         print k + '\t' + str(v)
 
 if __name__ == '__main__':
-    #main()
-    ordering()
+    main()
+    #ordering()

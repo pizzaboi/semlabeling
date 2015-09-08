@@ -113,11 +113,26 @@ def csv2corpus(args):
 		sys.exit("File {}, line {}: {}".format(src, reader, e))
 
 
+#def make_sheet(args):
+#	for src in slutil.listfile(args.src):
+#		path = "src/team.20130830/OC/" + src.replace(".txt", ".depmod")
+#		for morph in slutil.each_morph(path):
+#			print ",".join((src, morph.surface()))
+#		print
+
 def make_sheet(args):
 	for src in slutil.listfile(args.src):
-		path = "src/team.20130830/OC/" + src.replace(".txt", ".depmod")
-		for morph in slutil.each_morph(path):
-			print ",".join((src, morph.surface()))
+		path = "data/OC_by_CRF/" + src + '.txt'
+		for morph in slutil.each_tagged_morph(path):
+			crf = morph.tag()
+			chunk, sem = '', ''
+			if not crf.startswith(('B', 'I')):
+				pass
+			elif crf.startswith('B'):
+				chunk, sem = crf.split(':')
+			elif crf.startswith('I'):
+				chunk = 'I'
+			print ",".join((src, morph.surface(), chunk, sem))
 		print
 
 def parse_args():
