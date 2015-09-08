@@ -11,4 +11,7 @@
 - TBA
 
 ## CRFによる解析
-- TBA
+- `cross_validation.py` - 交差検定の実行スクリプト
+- `data4eval.py` - 評価用データを作成。
+- `feature.py` - 素性抽出スクリプト。
+- `split.py`  - 交差検定用にコーパスを分割。
