@@ -1,14 +1,14 @@
 #! /usr/bin/python
 #-*- coding: utf-8 -*-
 
-__LABEL_ver2_1__ = ('判断','否定','疑問','推量-不確実','推量-高確実性',
+__LABEL_ver2_1__ = set(['判断','否定','疑問','推量-不確実','推量-高確実性',
 '否定推量','意志','願望','当為','不可避','依頼','勧誘','勧め','許可','不許可',
 '不必要','無意味','可能','不可能','困難','容易','自然発生','自発','無意志',
 '試行','伝聞','回想','継続','着継続','発継続','最中','傾向','事前','完了',
 '事後','結果状態','習慣','反復','経歴','方向','授与','受益','受身','使役',
 '付帯-続行','付帯-並行','同時性','継起','終点','相関','対比','添加','比較',
 '場合','順接仮定','順接確定','逆接仮定','逆接確定','理由','目的','並立',
-'例示','様態','比況','程度','強調','感嘆','態度','内容','名詞化','話題')
+'例示','様態','比況','程度','強調','感嘆','態度','内容','名詞化','話題'])
 
 import json, codecs
 import os
@@ -52,7 +52,7 @@ class RulebasedTagger:
     def connect_match(self, i, ttj):
         ttj_id, ttj_surface = ttj.split(':')
         ttj_id = ttj_id.replace('.', '')
-        if not CR.has_key(ttj_id):
+        if not ttj_id in CR: #slightly faster than .has_key()
             return True
         for rule in CR[ttj_id]:
             if self.comp_rule(rule, self.sentence[i-1].feature()):
@@ -61,19 +61,24 @@ class RulebasedTagger:
 
     ## Extract semantics label.
     def sem_filter_01(self, sec):
+        D = {'I1': '推量-不確実' ,
+             'I2': '推量-高確実性',
+             'I3': '完了', #反実
+             'J1': '進行-習慣',
+             'J2': '進行-慣習',
+             'v1': '付帯-続行',
+             'v2': '付帯-並行',
+             'w3': '疑問', #感嘆-確認
+             'x3': '疑問', #疑問-確認
+             'K3': '依頼'}
+
         data = sec.split(':')
-        if data[0].startswith('I1'): return '推量-不確実'
-        elif data[0].startswith('I2'): return '推量-高確実性'
-        elif data[0].startswith('I3'): return '完了' #'反実'
-        elif data[0].startswith('J1'): return '進行-習慣'
-        elif data[0].startswith('J2'): return '進行-慣習'
-        elif data[1] == '無視': return '想外'
-        elif data[0].startswith('v1'): return '付帯-続行'
-        elif data[0].startswith('v2'): return '付帯-並行'
-        elif data[0].startswith('w3'): return '疑問' #'感嘆-確認'
-        elif data[0].startswith('x3'): return '疑問' #'疑問-確認'
-        elif data[0].startswith('K3'): return '依頼'
-        else: return data[1]
+        if data[0][:2] in D:
+            return D[data[0][:2]]
+        elif data[1] == '無視':
+            return '想外'
+        else:
+            return data[1]
 
     def sem_filter_02(self, sec):
         if sec == '限定':
@@ -97,9 +102,8 @@ class RulebasedTagger:
                 continue
 
             for entry in entries.split('/'):
-                seq = entry.split(',')
-                sec = seq.pop(0)
-                ttj = seq.pop(0)
+                e = entry.split(',')
+                sec, ttj, seq = e[0], e[1], e[2:] # 3sec faster than .pop(0)
 
                 # Check surroud
                 if not self.surround_match(i, seq):
@@ -133,7 +137,7 @@ class RulebasedTagger:
                     if len(ttj) >= max_len: # さらに長い表現のとき
                         morph.set_ttjsurface(ttj)
 
-                        if not FQ.has_key(field[0]):
+                        if not field[0] in FQ:
                             morph.define_as_begin(field[1])
                         else:
                             morph.define_as_begin(FQ[field[0]])
@@ -205,6 +209,8 @@ def test():
     #rt.print_label()
 
 def main():
+    import time
+    start = time.time()
     corpus = 'data/JFEcorpus_ver2.1/'
     #corpus = '700/tmp/'
     for src in [f for f in os.listdir(corpus) if f != '.DS_Store']:
@@ -212,8 +218,10 @@ def main():
         rt = RulebasedTagger(S)
         res = rt.tagger()
         for morph in res:
-            print repr(morph)
-        print
+            pass
+            #print repr(morph)
+        #print
+    print time.time() - start
 
 if __name__ == '__main__':
     import Kyotocabinet
