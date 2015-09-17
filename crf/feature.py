@@ -37,11 +37,6 @@ def apply_template(seq, t, template):
     テンプレートを適用し，適切な文字列形式にして返す関数．テンプレートは，素性名とオフセット
     のタプルのリスト．出力は，``素性名[オフセット]|素性名[オフセット]=素性|素性``の形式の
     文字列．
-
-    arguments:
-    seq     : 機能表現素性列
-    t       : 対象形態素のインデックス
-    template: 素性テンプレート
     """
     name = '|'.join(['%s[%d]' % (f, o) for f, o in template])
 
