@@ -5,43 +5,46 @@ import argparse
 import os
 import sys
 
-## Read annotated corpus per sentence.
-def readiter(src_list, names=('y','w','info','ne'), sep='\t'):
+def readiter(srcs, names=('y','w','info','ne'), sep='\t', no_tag=False):
+    """readiter() --> list of dict
+
+    ファイルリストを引数として受け取る．各形態素から基本素性の辞書を作成し、ファイルごとに
+    リストにして返す．基本素性は，引数namesとして受け取るが，デフォルトでは機能表現タグ・
+    表層形・形態素素性・固有表現タグとする．対象のファイルがアノテーションされていない場合，
+    no_tagオプションを指定することで，先頭にunkownを追加し，リスト長を調整する．
+    """
     seq = []
-    for src in [f for f in src_list if f != '.DS_Store']:
+    for src in [f for f in srcs if f != '.DS_Store']:
         for line in open(args.corpusdir + src, 'r'):
             line = line.strip('\n')
 
-            ## Ignore non-morph lines.
-            if line.startswith(('#', '*')):
-                pass
+            if line.startswith(('#', '*')): continue
 
-            ## Iterate list of morpheme-dictionaries when EOS.
-            elif line == 'EOS': # 文末でイテレート
+            elif line == 'EOS': # ファイル単位でイテレート
                 yield seq
                 seq = []
 
-            ## Append dictionaries into list.
-            ## (TODO) This process should be changed on each setting.
             else:
-                #fields = ['UNKNOWN'] + line.split(sep)
-                fields = line.split(sep)
+                fields = ['unknown'] if no_tag else [] #リスト長の調整
+                fields.extend(line.split(sep))
                 if len(fields) != len(names):
-                #if len(fields) != len(names) - 1:
                     raise ValueError("Invalid line: %s\n" % line)
-                #seq.append(dict(zip(names, tuple(fields[:4]))))
                 seq.append(dict(zip(names, tuple(fields[:3]))))
 
-## Returns feature in string-format.
-## @param seq: sequence of morphemes.
-## @param t: index of current morphemee.
-## @param template: template defined in extract_feature().
 def apply_template(seq, t, template):
+    """apply_template() -> string
 
-    ## Get name of attributes.
+    テンプレートを適用し，適切な文字列形式にして返す関数．テンプレートは，素性名とオフセット
+    のタプルのリスト．出力は，``素性名[オフセット]|素性名[オフセット]=素性|素性``の形式の
+    文字列．
+
+    arguments:
+    seq     : 機能表現素性列
+    t       : 対象形態素のインデックス
+    template: 素性テンプレート
+    """
     name = '|'.join(['%s[%d]' % (f, o) for f, o in template])
 
-    ## Get values of attributes.
     values = []
     for field, offset in template:
         p = t + offset
@@ -104,7 +107,7 @@ def extract_feature(src_list, EXTRACT_O=False):
     #templates += [(('pr',i), ('pr',i+1), ('pr',i+2)) for i in range(-2, 1)]
 
     ## Main process (extract features per sentence). 
-    for seq in readiter(src_list): #seq={morph1={}, morph2={},...}
+    for seq in readiter(src_list, no_tag=True): #seq={morph1={}, morph2={},...}
 
         ## Get the features from each morphemes.
         for v in seq:
@@ -166,6 +169,6 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     #print '\033[38;5;46m' + str(args) + '\033[0m'
-    srcs = [f.strip('\n') for f in sys.stdin]
-    #srcs = [f for f in os.listdir(args.corpusdir) if f != '.DS_Store']
+    #srcs = [f.strip('\n') for f in sys.stdin]
+    srcs = [f for f in os.listdir(args.corpusdir) if f != '.DS_Store']
     extract_feature(srcs, args.o)
