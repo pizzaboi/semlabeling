@@ -1,37 +1,54 @@
 #! bin/sh
 
-## Parse arguments. This script does not parse currently.
-dir=ver2.1_20150526
-corpus=../data/JFEcorpus_ver2.1/
-fold=10
+usage_exit() {
+    echo "Usage: $0 [-d dir] [-c corpus]" 1>&2
+    exit 1
+}
 
-## Make directory for working, separated data, extracted features, learned models, tags from CRFSuite.
-mkdir $dir
-cd $dir
-mkdir dataset
-mkdir features
-mkdir model
-mkdir tagged
+FOLD=10
+DIR=`date '+%Y%m%d%H%m'`
+
+# options:
+# d -- directory
+# c -- corpus
+# k -- validation fold
+while getopts d:c:k:h OPT
+do
+    case $OPT in
+        d) FLG_D="TRUE"; DIR="$OPTARG" ;;
+        c) FLG_C="TRUE"; CORPUS="$OPTARG" ;;
+        k) FLG_K="TRUE"; FOLD="$OPTARG" ;;
+        h) usage_exit ;;
+        \?) usage_exit ;;
+    esac
+done
+
+if [ "$FLG_C" != "TRUE" ]; then
+    echo "$0 requires -c option"; usage_exit
+fi
+
+## 作業ディレクトリの作成
+mkdir $DIR
+cd $DIR
+mkdir dataset; dataset=${DIR}/dataset
+mkdir features; features=${DIR}/features
+mkdir model; model=${DIR}/model
+mkdir tagged; tagged=${DIR}/tagged
 cd ..
 
-dataset=${dir}/dataset
-features=${dir}/features
-model=${dir}/model
-tagged=${dir}/tagged
+## データの分割
+#python scripts/split.py ${CORPUS} ${DIR}/
 
-## Split data for cross-validation, storing list of splitted files into dataset directory.
-python split.py ${corpus} ${dir}/
+## 素性抽出
+#echo -n Extracting features...
+#for index in `seq 0 9`
+#    do
+#        python scripts/feature.py ${CORPUS} < ${dataset}/${index} > ${features}/${index}.f
+#        echo -n "${index} "
+#    done
+#echo done
 
-## Extract features from each dataset in dataset directory, storing features into fetures directory.
-echo -n Extracting features...
-for index in `seq 0 9`
-    do
-        python feature.py ${corpus} < ${dataset}/${index} > ${features}/${index}.f
-        echo -n "${index} "
-    done
-echo done
-
-## Cross-validate with CRFSuite, storing resulted tags into tagged directory.
+### Cross-validate with CRFSuite, storing resulted tags into tagged directory.
 echo -n Running cross validation...
 for test in `seq 0 9`
 do
@@ -48,8 +65,8 @@ do
 done
 echo done
 
-## Make data for evaluation, writing result as crf.eval.
-#python data4eval.py $corpus $tagged/ > $dir/crf.eval
-
-## Evaluate Eval.py.
-#python ../lib/Eval.py < $dir/crf.eval
+### Make data for evaluation, writing result as crf.eval.
+##python data4eval.py $corpus $tagged/ > $dir/crf.eval
+#
+### Evaluate Eval.py.
+##python ../lib/Eval.py < $dir/crf.eval
