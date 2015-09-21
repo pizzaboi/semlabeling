@@ -78,9 +78,10 @@ do
         fi
     done
     # /usr/local/bin/crfsuite
-    cat "${trains[@]}" | crfsuite learn -m ${model}/${test}.m - > logs 
+    echo "crfsuite learn for ${test}.f"
+    cat "${trains[@]}" | crfsuite learn -m ${model}/${test}.m -
     crfsuite tag -r -m ${model}/${test}.m < ${features}/${test}.f > ${tagged}/${test}.t
-    echo -n "${test} "
+    #echo -n "${test} "
 done
 echo done
 
