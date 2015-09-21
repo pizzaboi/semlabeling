@@ -28,27 +28,45 @@ if [ "$FLG_C" != "TRUE" ]; then
 fi
 
 ## 作業ディレクトリの作成
-mkdir $DIR
-cd $DIR
-mkdir dataset; dataset=${DIR}/dataset
-mkdir features; features=${DIR}/features
-mkdir model; model=${DIR}/model
-mkdir tagged; tagged=${DIR}/tagged
-cd ..
+if [ ! -e $DIR ]; then
+    mkdir $DIR
+    cd $DIR
+    mkdir dataset
+    mkdir features
+    mkdir model
+    mkdir tagged
+    cd ..
+else
+    echo "${DIR} already exist."
+fi
+
+## 変数の設定
+dataset=${DIR}/dataset
+features=${DIR}/features
+model=${DIR}/model
+tagged=${DIR}/tagged
 
 ## データの分割
-#python scripts/split.py ${CORPUS} ${DIR}/
+if [ `ls ${dataset}/ | wc -l` -lt 10 ]; then
+    python scripts/split.py ${CORPUS} ${DIR}/
+else
+    echo "data sets are ready."
+fi
 
 ## 素性抽出
-#echo -n Extracting features...
-#for index in `seq 0 9`
-#    do
-#        python scripts/feature.py ${CORPUS} < ${dataset}/${index} > ${features}/${index}.f
-#        echo -n "${index} "
-#    done
-#echo done
+if [ `ls ${features} | wc -l` -lt 10 ]; then
+    echo -n Extracting features...
+    for index in `seq 0 9`
+        do
+            python scripts/feature.py ${CORPUS} < ${dataset}/${index} > ${features}/${index}.f
+            echo -n "${index} "
+        done
+    echo done
+else
+    echo "features are ready."
+fi
 
-### Cross-validate with CRFSuite, storing resulted tags into tagged directory.
+## Cross-validate with CRFSuite, storing resulted tags into tagged directory.
 echo -n Running cross validation...
 for test in `seq 0 9`
 do
@@ -59,8 +77,9 @@ do
             trains+=(${features}/${train}.f)
         fi
     done
-    cat "${trains[@]}" | /usr/local/bin/crfsuite learn -m ${model}/${test}.m - > logs
-    /usr/local/bin/crfsuite tag -r -m ${model}/${test}.m < ${features}/${test}.f > ${tagged}/${test}.t
+    # /usr/local/bin/crfsuite
+    cat "${trains[@]}" | crfsuite learn -m ${model}/${test}.m - > logs 
+    crfsuite tag -r -m ${model}/${test}.m < ${features}/${test}.f > ${tagged}/${test}.t
     echo -n "${test} "
 done
 echo done
