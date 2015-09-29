@@ -152,6 +152,6 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     #print '\033[38;5;46m' + str(args) + '\033[0m'
-    #srcs = [f.strip('\n') for f in sys.stdin]
-    srcs = [f for f in os.listdir(args.corpusdir) if f != '.DS_Store']
+    srcs = [f.strip('\n') for f in sys.stdin]
+    #srcs = [f for f in os.listdir(args.corpusdir) if f != '.DS_Store']
     extract_feature(srcs, args.o)
