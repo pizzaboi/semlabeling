@@ -8,7 +8,7 @@ import os
 
 def gs_iter(annotated_corpus_dir):
     """正解ラベルを取得"""
-    for src in [f for f in os.listdir(annotated_corpus_dir) if f != '.DS_Store']:
+    for src in [f for f in sorted(os.listdir(annotated_corpus_dir)) if f != '.DS_Store']:
         for line in open(annotated_corpus_dir + src):
             if not line.startswith(('#','*','EOS')):
                 yield (src, line.strip('\n'))
