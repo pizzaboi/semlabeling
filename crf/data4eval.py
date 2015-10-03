@@ -6,8 +6,8 @@
 import argparse
 import os
 
-## Yields gold standards from annotated_corpus_dir.
 def gs_iter(annotated_corpus_dir):
+    """正解ラベルを取得"""
     for src in [f for f in os.listdir(annotated_corpus_dir) if f != '.DS_Store']:
         for line in open(annotated_corpus_dir + src):
             if not line.startswith(('#','*','EOS')):
@@ -29,6 +29,7 @@ def make_data4evaluation(annotated_corpus_dir, tagged_dir):
 
 ## Merge result from CRFSuite with annotated gold standard only if FE.
 def make_data4evaluation_only_fe(annotated_corpus_dir, tagged_dir):
+    """正解(\t)出力 を作成する"""
 
     ## get generator for gold standards.
     gs = gs_iter(annotated_corpus_dir)
