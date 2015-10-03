@@ -6,7 +6,7 @@ import os
 
 ## Split files into N dataset equally, returning the list of splitted files.
 def split(directory, N=10):
-    seq = os.listdir(directory)
+    seq = sorted(os.listdir(directory))
     size = len(seq) / N
     unit = [size] * N
     remain = len(seq) - size * N
