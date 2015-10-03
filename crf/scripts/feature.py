@@ -75,6 +75,8 @@ def extract_feature(src_list, EXTRACT_O=False):
     #templates += [(('rd',i),) for i in range(-2, 3)]
     #templates += [(('pr',i),) for i in range(-2, 3)]
 
+    #追加分
+    templates += [(('p',i),('w',i+1))]
 
     ## Bigram features.
     templates += [(('p',i), ('p',i+1)) for i in range(-2, 2)] #78.69%
