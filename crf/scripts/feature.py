@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import argparse
+from collections import defaultdict
 import os
 import sys
 
@@ -15,12 +16,14 @@ def readiter(srcs, names=('y','w','info','ne'), sep='\t', no_tag=False):
     """
     seq = []
     for src in [f for f in srcs if f != '.DS_Store']:
+        print src
         for line in open(args.corpusdir + src, 'r'):
             line = line.strip('\n')
 
             if line.startswith(('#', '*')): continue
 
-            elif line == 'EOS': # ファイル単位でイテレート
+            elif line == 'EOS':
+                # ファイル単位でイテレート
                 yield seq
                 seq = []
 
@@ -56,68 +59,52 @@ def escape(src):
 ## Extract features and write down features list.
 def extract_feature(src_list, EXTRACT_O=False):
     templates =[]
+    ws = 2 # window size
 
-    ## Unigram features.
-    templates += [(('w',i),) for i in range(-2, 3)] # *
-    templates += [(('p',i),) for i in range(-2, 3)] # *
-    templates += [(('p',i), ('p1',i)) for i in range(-2, 3)] # *
-    #templates += [(('p1',i),) for i in range(-2, 3)]
-    templates += [(('p',i),('p1',i),('p2',i)) for i in range(-2, 3)] # *
-    #templates += [(('p2',i),) for i in range(-2, 3)]
-    templates += [(('p',i),('p1',i),('p2',i), ('p3',i)) for i in range(-2, 3)] # *
-    #templates += [(('p3',i),) for i in range(-2, 3)]
-    #templates += [(('ct',i),) for i in range(-2, 3)]
-    #templates += [(('cf',i),) for i in range(-2, 3)]
-    templates += [(('bf',i),) for i in range(-2, 3)] # *
-    templates += [(('bf',i),('p',i)) for i in range(-2, 3)] # *
-    templates += [(('bf',i),('p',i),('p1',i)) for i in range(-2, 3)] # * 78.56%
-    templates += [(('bf',i),('p',i),('p1',i),('p2',i)) for i in range(-2, 3)] # * 78.55%
-    #templates += [(('rd',i),) for i in range(-2, 3)]
-    #templates += [(('pr',i),) for i in range(-2, 3)]
+    ## unigram素性
+    templates += [(('w',i),) for i in range(-ws, ws+1)]
+    templates += [(('p',i),) for i in range(-ws, ws+1)]
+    templates += [(('p',i), ('p1',i)) for i in range(-ws, ws+1)]
+    templates += [(('p',i),('p1',i),('p2',i)) for i in range(-ws, ws+1)]
+    templates += [(('p',i),('p1',i),('p2',i), ('p3',i)) for i in range(-ws, ws+1)]
+    templates += [(('cf',i),) for i in range(-ws, ws+1)]
+    templates += [(('bf',i),) for i in range(-ws, ws+1)]
+    templates += [(('bf',i),('p',i)) for i in range(-ws, ws+1)]
+    templates += [(('bf',i),('p',i),('p1',i)) for i in range(-ws, ws+1)]
+    templates += [(('bf',i),('p',i),('p1',i),('p2',i)) for i in range(-ws, ws+1)]
 
-    #追加分
-    templates += [(('p',i),('w',i+1))]
+    ## bigram素性
+    templates += [(('p', i), ('p', i+1)) for i in range(-ws, ws)]
+    templates += [(('w', i), ('w', i+1)) for i in range(-ws, ws)]
+    templates += [(('bf',i), ('bf',i+1)) for i in range(-ws, ws)]
+    templates += [(('cf',i), ('w', i+1)) for i in range(-ws, ws)]
 
-    ## Bigram features.
-    templates += [(('p',i), ('p',i+1)) for i in range(-2, 2)] #78.69%
-    templates += [(('w',i), ('w',i+1)) for i in range(-2, 2)] #78.86%
-    #templates += [(('p',i), ('p1',i), ('p',i+1), ('p1',i+1)) for i in range(-2, 2)] #78.81%
-    templates += [(('bf',i), ('bf',i+1)) for i in range(-2, 2)] #79.11%
-    #templates += [(('p1',i), ('p1',i+1)) for i in range(-2, 2)]
-    #templates += [(('p2',i), ('p2',i+1)) for i in range(-2, 2)]
-    #templates += [(('p3',i), ('p3',i+1)) for i in range(-2, 2)]
-    #templates += [(('ct',i), ('ct',i+1)) for i in range(-2, 2)]
-    #templates += [(('cf',i), ('cf',i+1)) for i in range(-2, 2)]
-    #templates += [(('rd',i), ('rd',i+1)) for i in range(-2, 2)]
-    #templates += [(('pr',i), ('pr',i+1)) for i in range(-2, 2)]
-
-    ## 3-gram features.
-    #templates += [(('w',i), ('w',i+1), ('w',i+2)) for i in range (-2, 1)]
-    #templates += [(('p',i), ('pos',i+1), ('pos',i+2)) for i in range(-2, 1)]
-    #templates += [(('p1',i), ('p1',i+1), ('p1',i+2)) for i in range(-2, 1)]
-    #templates += [(('p2',i), ('p2',i+1), ('p2',i+2)) for i in range(-2, 1)]
-    #templates += [(('p3',i), ('p3',i+1), ('p3',i+2)) for i in range(-2, 1)]
-    #templates += [(('ct',i), ('ct',i+1), ('ct',i+2)) for i in range(-2, 1)]
-    #templates += [(('cf',i), ('cf',i+1), ('cf',i+2)) for i in range(-2, 1)]
-    #templates += [(('bf',i), ('bf',i+1), ('bf',i+2)) for i in range(-2, 1)]
-    #templates += [(('rd',i), ('rd',i+1), ('rd',i+2)) for i in range(-2, 1)]
-    #templates += [(('pr',i), ('pr',i+1), ('pr',i+2)) for i in range(-2, 1)]
+    ## 機能表現辞書
+    known = defaultdict(int)
+    for fe in open('KnownExpressionList'):
+        known[fe.strip('\n')] += 1
+    templates += [(('bigram',i),) for i in range(-ws, ws+1)]
 
     ## Main process (extract features per sentence). 
     for seq in readiter(src_list): #seq={morph1={}, morph2={},...}
 
         ## Get the features from each morphemes.
-        for v in seq:
-            morph_info = v['info'].split(',')
-            v['p'] = morph_info[0]  #pos class
-            v['p1'] = morph_info[1] #pos subclass 1
-            v['p2'] = morph_info[2] #pos subclass 2
-            v['p3'] = morph_info[3] #pos subclass 3
-            v['ct'] = morph_info[4] #conjugate type
-            v['cf'] = morph_info[5] #conjugate form
-            v['bf'] = morph_info[6] #base form
-            v['rd'] = morph_info[7] if len(morph_info) > 7 else v['bf'] #read
-            v['pr'] = morph_info[8] if len(morph_info) > 7 else v['bf'] #pronunciation
+        for i in xrange(len(seq)):
+            morph_info = seq[i]['info'].split(',')
+            seq[i]['p']  = morph_info[0] # 品詞
+            seq[i]['p1'] = morph_info[1] # 品詞細分類1
+            seq[i]['p2'] = morph_info[2] # 品詞細分類2
+            seq[i]['p3'] = morph_info[3] # 品詞細分類3
+            seq[i]['ct'] = morph_info[4] # 活用型
+            seq[i]['cf'] = morph_info[5] # 活用形
+            seq[i]['bf'] = morph_info[6] # 基本形
+            seq[i]['rd'] = morph_info[7] if len(morph_info) > 7 else seq[i]['bf'] # 読み
+            seq[i]['pr'] = morph_info[8] if len(morph_info) > 7 else seq[i]['bf'] # 発音
+            seq[i]['bigram'] = 'False'
+
+        for j in xrange(len(seq) - 1):
+            bigram = seq[j]['w'] + seq[j+1]['w']
+            seq[j]['bigram'] = str(bigram in known)
 
         if EXTRACT_O: #機能表現以外からも素性抽出する場合
             for t in range(len(seq)):
@@ -154,6 +141,6 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
     #print '\033[38;5;46m' + str(args) + '\033[0m'
-    srcs = [f.strip('\n') for f in sys.stdin]
-    #srcs = [f for f in os.listdir(args.corpusdir) if f != '.DS_Store']
+    #srcs = [f.strip('\n') for f in sys.stdin]
+    srcs = [f for f in os.listdir(args.corpusdir) if f != '.DS_Store']
     extract_feature(srcs, args.o)
