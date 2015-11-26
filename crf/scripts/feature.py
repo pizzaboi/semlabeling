@@ -16,7 +16,7 @@ def readiter(srcs, names=('y','w','info','ne'), sep='\t', no_tag=False):
     """
     seq = []
     for src in [f for f in srcs if f != '.DS_Store']:
-        print src
+        #print src
         for line in open(args.corpusdir + src, 'r'):
             line = line.strip('\n')
 
@@ -80,10 +80,10 @@ def extract_feature(src_list, EXTRACT_O=False):
     templates += [(('cf',i), ('w', i+1)) for i in range(-ws, ws)]
 
     ## 機能表現辞書
-    known = defaultdict(int)
-    for fe in open('KnownExpressionList'):
-        known[fe.strip('\n')] += 1
-    templates += [(('bigram',i),) for i in range(-ws, ws+1)]
+    #known = defaultdict(int)
+    #for fe in open('KnownExpressionList'):
+    #    known[fe.strip('\n')] += 1
+    #templates += [(('bigram',i),) for i in range(-ws, ws+1)]
 
     ## Main process (extract features per sentence). 
     for seq in readiter(src_list): #seq={morph1={}, morph2={},...}
@@ -100,11 +100,11 @@ def extract_feature(src_list, EXTRACT_O=False):
             seq[i]['bf'] = morph_info[6] # 基本形
             seq[i]['rd'] = morph_info[7] if len(morph_info) > 7 else seq[i]['bf'] # 読み
             seq[i]['pr'] = morph_info[8] if len(morph_info) > 7 else seq[i]['bf'] # 発音
-            seq[i]['bigram'] = 'False'
+            #seq[i]['bigram'] = 'False'
 
-        for j in xrange(len(seq) - 1):
-            bigram = seq[j]['w'] + seq[j+1]['w']
-            seq[j]['bigram'] = str(bigram in known)
+        #for j in xrange(len(seq) - 1):
+        #    bigram = seq[j]['w'] + seq[j+1]['w']
+        #    seq[j]['bigram'] = str(bigram in known)
 
         if EXTRACT_O: #機能表現以外からも素性抽出する場合
             for t in range(len(seq)):
