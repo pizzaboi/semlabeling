@@ -2,7 +2,7 @@
 機能表現解析用スクリプト群
 
 ## コーパス
-<img src="https://raw.githubusercontent.com/pizzaboi/semlabeling/master/images/corpus_inst.png" height="300px">
+<img src="https://raw.githubusercontent.com/pizzaboi/semlabeling/master/images/corpus_inst2.png" height="300px">
 
 
 - `diff_files/` - 差分ファイル群(`make_diff.py`の出力)
