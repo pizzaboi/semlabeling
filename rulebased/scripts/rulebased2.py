@@ -1,14 +1,23 @@
-#! /usr/bin/python
 #-*- coding: utf-8 -*-
 
+"""FE tagger (Longest match principle)
+
+辞書ベースの最長一致法による機能表現タガー．
+機能表現解析のベースライン．
+
+Usage:
+    python rulebased2.py
+"""
+
+## 機能表現タグ
 __LABEL_ver2_1__ = set(['判断','否定','疑問','推量-不確実','推量-高確実性',
-'否定推量','意志','願望','当為','不可避','依頼','勧誘','勧め','許可','不許可',
-'不必要','無意味','可能','不可能','困難','容易','自然発生','自発','無意志',
-'試行','伝聞','回想','継続','着継続','発継続','最中','傾向','事前','完了',
-'事後','結果状態','習慣','反復','経歴','方向','授与','受益','受身','使役',
-'付帯-続行','付帯-並行','同時性','継起','終点','相関','対比','添加','比較',
-'場合','順接仮定','順接確定','逆接仮定','逆接確定','理由','目的','並立',
-'例示','様態','比況','程度','強調','感嘆','態度','内容','名詞化','話題'])
+    '否定推量','意志','願望','当為','不可避','依頼','勧誘','勧め','許可','不許可',
+    '不必要','無意味','可能','不可能','困難','容易','自然発生','自発','無意志',
+    '試行','伝聞','回想','継続','着継続','発継続','最中','傾向','事前','完了',
+    '事後','結果状態','習慣','反復','経歴','方向','授与','受益','受身','使役',
+    '付帯-続行','付帯-並行','同時性','継起','終点','相関','対比','添加','比較',
+    '場合','順接仮定','順接確定','逆接仮定','逆接確定','理由','目的','並立',
+    '例示','様態','比況','程度','強調','感嘆','態度','内容','名詞化','話題'])
 
 import json, codecs
 import os
@@ -16,15 +25,17 @@ import os
 import freq
 from morph import Morph
 
-## Class for rulebased tagger.
 class RulebasedTagger:
+
     def __init__(self, S):
         self.sentence = S
 
-    ## surround_match() is True <=> all tokes in seq matches in surface.
-    ## param i   : current index in sentence 
-    ## param seq : surrounding
     def surround_match(self, i, seq):
+        """surround_match() --> bool
+
+        i番目以降の形態素表層がseqと一致するかを判定する関数．
+        seqはつつじ形式のリスト．ex. ["1:しれ", "2:ない"]
+        """
         for token in seq:
             if not token:
                 break
@@ -35,10 +46,12 @@ class RulebasedTagger:
                 return False
         return True
 
-    ## comp_rule(r1, r2) is True <=> r1 > r2.
-    ## param r1 : connect rule
-    ## param r2 : connect rule
     def comp_rule(self, r1, r2):
+        """comp_rule() --> bool
+
+        2つの接続制約情報が一致するかを判定する関数．
+        '*'はどの制約とも一致するとする．
+        """
         r1 = r1.split(',')
         r2 = r2.split(',')
         for i in xrange(len(r1) - 2):
@@ -46,10 +59,12 @@ class RulebasedTagger:
                 return False
         return True
 
-    ## connect_match() is True <=> ttj satisfies connect rule.
-    ## param i   : current index in sentence
-    ## param ttj :
     def connect_match(self, i, ttj):
+        """connect_match() --> bool
+
+        形態素が接続制約を満たすかを判定する関数．
+        ttjはつつじIDと表層形の連結．分割後，つつじIDで制約辞書を検索して比較．
+        """
         ttj_id, ttj_surface = ttj.split(':')
         ttj_id = ttj_id.replace('.', '')
         if not ttj_id in CR: #slightly faster than .has_key()
@@ -59,8 +74,12 @@ class RulebasedTagger:
                 return True
         return False
 
-    ## Extract semantics label.
     def sem_filter_01(self, sec):
+        """sem_filter_01() --> str (semantic tag)
+
+        意味カテゴリIDと意味ラベルの連結から意味ラベルを抽出する関数．
+        つつじオリジナルのラベルに対していくつかのフィルタを適用する．
+        """
         D = {'I1': '推量-不確実' ,
              'I2': '推量-高確実性',
              'I3': '完了', #反実
@@ -89,6 +108,11 @@ class RulebasedTagger:
             return False
 
     def set_candidates(self):
+        """set_candidates() --> None
+
+        形態素ごとに辞書を検索して，辞書エントリと周辺形態素が一致したとき，機能表現表層と
+        意味ラベルを候補に追加する．
+        """
         s = self.sentence
         for i in xrange(len(s)):
 
@@ -96,33 +120,37 @@ class RulebasedTagger:
             if not s[i].is_fe():
                 continue
 
-            entries = FE.get(s[i].surface())
-
-            if not entries:
+            #entries = FE.get(s[i].surface())
+            if FE.has_key(s[i].surface()):
+                entries = FE[s[i].surface()]
+            else:
                 continue
 
-            for entry in entries.split('/'):
+            #if not entries:
+            #    continue
+
+            for entry in entries:
                 e = entry.split(',')
                 sec, ttj, seq = e[0], e[1], e[2:] # 3sec faster than .pop(0)
 
-                # Check surroud
+                ## 周辺形態素の検証
                 if not self.surround_match(i, seq):
                     continue
                 #print 'Sequence Matched: %s' % entry
 
-                # Sem Label Filter
+                ## 意味ラベルにフィルタを適用
                 sec = self.sem_filter_01(sec)
                 sec = self.sem_filter_02(sec)
                 if not sec:
+                    ## 意味ラベルが不適切な場合は次の形態素へ
                     continue
 
-                # Check connection
+                ## 接続制約の検証
                 if not self.connect_match(i, ttj):
                     #print 'Connection Mismatched: %s' % entry
                     continue
 
-                # Add candidate, if surround AND connectoin matched
-                
+                ## 意味ラベル候補を追加する
                 s[i].add_candidate((ttj.split(':')[1], sec))
 
     def longest_match(self):
@@ -201,7 +229,7 @@ def encode_sentence(src):
 
 def test():
     #srcs = [f for f in os.listdir(args.corpus) if f != '.DS_Store']
-    src='data/JFEcorpus_ver2.1/OC15_00907m_004.depmod'
+    src='../data/JFEcorpus_ver2.1/OC15_00907m_004.depmod'
     S = encode_sentence(src)
     rt = RulebasedTagger(S)
     for morph in rt.tagger(True):
@@ -209,31 +237,42 @@ def test():
     #rt.print_label()
 
 def main():
-    import time
-    start = time.time()
-    corpus = 'data/JFEcorpus_ver2.1/'
+    #corpus = '../data/JFEcorpus_ver2.1/'
     #corpus = '700/tmp/'
+    corpus = '../data/test300hyphen/'
     for src in [f for f in os.listdir(corpus) if f != '.DS_Store']:
         S = encode_sentence(corpus  + src)
         rt = RulebasedTagger(S)
         res = rt.tagger()
         for morph in res:
-            pass
-            #print repr(morph)
-        #print
-    print time.time() - start
+            #pass
+            print repr(morph)
+        print
+    #print time.time() - start
 
 if __name__ == '__main__':
-    import Kyotocabinet
-    FE = Kyotocabinet.read_db('rulebased/fe_dict.kch')
-    #FE = Kyotocabinet.read_db('../ttj_dict.kch')
 
-    with codecs.open("rulebased/connect.json", "r", "utf-8") as f:
-        CR = json.load(f)
-    #CR = Kyotocabinet.read_db('../cr_dict_for_multi.kch')
+    from preprocess import *
 
+    ## 追加機能表現・追加接続制約の取得
+    aec = AdditionalEntryCollector(
+        '../data/JFEcorpus_ver2.1',
+        'ttj_dict.kch')
+    F, C = aec.get_add_entry()
+
+    ## 辞書の構築
+    dc = DictCompiler()
+    FE = dc.extended_dict('../src/ttj11core2seq', F)
+
+    ## 制約の獲得
+    cc = ConstraintCompiler(
+        '../src/connectID.txt',
+        '../src/fe_right_left_rule_list.txt')
+    CR = cc.get_dictionary(C)
+
+    ## 頻度情報の取得
     counter = freq.CorpusCounter()
-    FQ = counter.frequent_tags("data/JFEcorpus_ver2.1/")
+    FQ = counter.frequent_tags("../data/JFEcorpus_ver2.1/")
 
     #test()
     main()
