@@ -12,11 +12,12 @@ read sentence
 echo ${sentence} | /usr/local/bin/cabocha -f1 > sentence.cabocha
 
 ## 素性抽出 > sentence.f
-python unit_sent_feature.py < sentence.cabocha > sentence.f
+python feature.py < sentence.cabocha > sentence.f
 
 ## CRFSuiteによるタグ付与 > sentence.tagged
-#crfsuite tag -p -m 1627.m < sentence.f > sentence.tagged
-/usr/local/bin/crfsuite tag -m 1627.m < sentence.f > sentence.tagged
+#/usr/local/bin/crfsuite tag -p -m 1627.m < sentence.f > sentence.tagged
+#/usr/local/bin/crfsuite tag -m 1627.m < sentence.f > sentence.tagged
+/usr/local/bin/crfsuite tag -m jfe_corpus_core.model < sentence.f > sentence.tagged
 
 ## CaboCha解析結果と併せて出力
 python output.py
