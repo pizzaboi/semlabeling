@@ -116,6 +116,10 @@ class Morph:
 			'feature': self.__feature
 		}
 
+	def __repr__(self):
+		system_tag = self.__defined_tag if self.__defined_tag else 'O'
+		return self.__tag + '\t' + system_tag
+
 if __name__ == '__main__':
 
 	## テスト
