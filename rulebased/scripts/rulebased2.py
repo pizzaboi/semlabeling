@@ -271,8 +271,8 @@ if __name__ == '__main__':
     CR = cc.get_dictionary(C)
 
     ## 頻度情報の取得
-    counter = freq.CorpusCounter()
-    FQ = counter.frequent_tags("../data/JFEcorpus_ver2.1/")
+    counter = freq.CorpusCounter("../data/JFEcorpus_ver2.1/")
+    FQ = counter.frequent_tags()
 
     #test()
     main()
